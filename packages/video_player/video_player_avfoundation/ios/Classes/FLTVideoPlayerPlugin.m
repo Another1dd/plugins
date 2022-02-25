@@ -646,11 +646,11 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
 - (void)setMixWithOthers:(FLTMixWithOthersMessage *)input
                    error:(FlutterError *_Nullable __autoreleasing *)error {
   if (input.mixWithOthers.boolValue) {
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient
                                      withOptions:AVAudioSessionCategoryOptionMixWithOthers
                                            error:nil];
   } else {
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
   }
 }
 
