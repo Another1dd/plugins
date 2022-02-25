@@ -7,7 +7,10 @@ package io.flutter.plugins.videoplayer;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.view.Surface;
@@ -50,6 +53,8 @@ final class VideoPlayer {
     private static final String FORMAT_HLS = "hls";
     private static final String FORMAT_OTHER = "other";
 
+    private Context context;
+
     private SimpleExoPlayer exoPlayer;
 
     private Surface surface;
@@ -68,6 +73,13 @@ final class VideoPlayer {
 
     private double volume = 1.0;
 
+    private final BroadcastReceiver ringerModeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateVolume();
+        }
+    };
+
     VideoPlayer(
             Context context,
             EventChannel eventChannel,
@@ -76,11 +88,16 @@ final class VideoPlayer {
             String formatHint,
             @NonNull Map<String, String> httpHeaders,
             VideoPlayerOptions options) {
+        this.context = context;
         this.eventChannel = eventChannel;
         this.textureEntry = textureEntry;
         this.options = options;
 
         am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        IntentFilter filter = new IntentFilter(
+                AudioManager.RINGER_MODE_CHANGED_ACTION);
+        context.registerReceiver(ringerModeReceiver, filter);
 
         exoPlayer = new SimpleExoPlayer.Builder(context).build();
 
@@ -242,7 +259,7 @@ final class VideoPlayer {
     }
 
     void play() {
-        setVolume(this.volume);
+        updateVolume();
 
         exoPlayer.setPlayWhenReady(true);
     }
@@ -264,6 +281,10 @@ final class VideoPlayer {
         } else {
             exoPlayer.setVolume(bracketedValue);
         }
+    }
+
+    void updateVolume() {
+        setVolume(this.volume);
     }
 
     void setPlaybackSpeed(double value) {
@@ -310,13 +331,18 @@ final class VideoPlayer {
         if (isInitialized) {
             exoPlayer.stop();
         }
+
         textureEntry.release();
         eventChannel.setStreamHandler(null);
+
         if (surface != null) {
             surface.release();
         }
+
         if (exoPlayer != null) {
             exoPlayer.release();
         }
+
+        context.unregisterReceiver(ringerModeReceiver);
     }
 }
